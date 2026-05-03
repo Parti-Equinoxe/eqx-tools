@@ -9,5 +9,5 @@ services:
 # Pour rollback : eqx-tools:<version> puis
 # docker-compose pull && docker-compose up -d && docker ps && docker image ls
 
-# Supprimer les images non taggées : docker image prune
-# Supprimer une image : docker rmi <ID>
+# Supprimer les images non taggées : docker image prune -f
+# Supprimer une image : docker rmi <ID> -f

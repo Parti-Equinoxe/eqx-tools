@@ -52,3 +52,16 @@ jobs:
             GIT_HASH=${{ github.sha }}
           cache-from: type=registry,ref=${{ vars.DOCKERHUB_USERNAME }}/eqx-tools:buildcache
           cache-to: type=registry,ref=${{ vars.DOCKERHUB_USERNAME }}/eqx-tools:buildcache,mode=max
+
+      # Étape 6 : Déployer sur le VPS
+      - name: Deploy to VPS
+        uses: appleboy/ssh-action@v1.2.5
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USERNAME }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          script: |
+            cd /etc/docker/compose/eqx-tools
+            docker-compose pull
+            docker-compose up -d
+            docker image prune -f
