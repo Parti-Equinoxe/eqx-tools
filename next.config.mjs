@@ -17,6 +17,7 @@ const nextConfig = {
   env: {
     GIT_HASH: gitHash,
   },
+  output: 'standalone',
 }
 
 export default nextConfig
