@@ -1,0 +1,154 @@
+import { type ScrutinData, type Distribution, type Choice } from "../actions"
+
+// Mapping des mentions vers leurs abréviations
+export const MENTION_SHORTCUTS: { [key: string]: string } = {
+  Excellent: "E",
+  Bien: "B",
+  Passable: "P",
+  Insuffisant: "I",
+  "À rejeter": "R",
+  Abstention: "A",
+}
+
+// Mapping des abréviations vers les mentions complètes
+export const MENTION_FULL: { [key: string]: string } = {
+  E: "Excellent",
+  B: "Bien",
+  P: "Passable",
+  I: "Insuffisant",
+  R: "À rejeter",
+  A: "Abstention",
+}
+
+// Convertit les données du scrutin en format URL
+export function formatDataForUrl(data: ScrutinData): string {
+  const choices = Object.entries(data.distribution).map(([name, choice]) => {
+    // Encode le nom du choix
+    const encodedName = encodeURIComponent(name)
+
+    // Obtient l'abréviation de la mention majoritaire
+    const mentionShortcut = MENTION_SHORTCUTS[choice.mention]
+
+    // Crée la chaîne de distribution
+    // Trier pour mettre l'abstention en dernier si elle existe
+    const distributionEntries = Object.entries(choice.distribution)
+    const abstentionEntry = distributionEntries.find(([mention]) => mention === "Abstention")
+    const otherEntries = distributionEntries.filter(([mention]) => mention !== "Abstention")
+    const sortedEntries = abstentionEntry 
+      ? [...otherEntries, abstentionEntry]
+      : otherEntries
+    
+    const distributionString = sortedEntries
+      .map(([mention, count]) => `${MENTION_SHORTCUTS[mention]}${count}`)
+      .join("")
+
+    // Retourne le format demandé pour ce choix
+    const parts = [
+      encodedName,
+      mentionShortcut,
+      distributionString,
+      choice.score,
+    ]
+    if (choice.tieBreakScore || choice.rank !== undefined) {
+      parts.push(choice.tieBreakScore || "")
+      if (choice.rank !== undefined) {
+        parts.push(choice.rank.toString())
+      }
+    }
+    return parts.join("~")
+  })
+
+  // Joint tous les choix avec le caractère '_'
+  return choices.join("_")
+}
+
+// Parse les données de l'URL vers le format d'origine
+export function parseUrlData(urlData: string): ScrutinData {
+  const distribution: { [choice: string]: Choice } = {}
+
+  const choices = urlData.split("_")
+  for (const choice of choices) {
+    const parts = choice.split("~")
+    const encodedName = parts[0]
+    const mentionShortcut = parts[1]
+    const distributionString = parts[2]
+    const score = parts[3]
+    const tieBreakScore = parts[4] || undefined
+    const rankStr = parts[5]
+    const rank = rankStr ? parseInt(rankStr, 10) : undefined
+
+    // Remplace les + par des espaces avant de décoder
+    const name = decodeURIComponent(encodedName.replace(/\+/g, " "))
+
+    // Parse la distribution
+    const distributionData: Distribution = {}
+    let currentIndex = 0
+    while (currentIndex < distributionString.length) {
+      const mentionShortcut = distributionString[currentIndex]
+      let countStr = ""
+      currentIndex++
+      while (
+        currentIndex < distributionString.length &&
+        !isNaN(Number(distributionString[currentIndex]))
+      ) {
+        countStr += distributionString[currentIndex]
+        currentIndex++
+      }
+      const mention = MENTION_FULL[mentionShortcut]
+      distributionData[mention] = Number(countStr)
+    }
+
+    const mention = MENTION_FULL[mentionShortcut]
+
+    distribution[name] = {
+      mention,
+      score,
+      distribution: distributionData,
+      ...(tieBreakScore && tieBreakScore !== "" ? { tieBreakScore } : {}),
+      ...(rank !== undefined ? { rank } : {}),
+    }
+  }
+
+  // Récupérer le gagnant (celui avec le meilleur rang, ou sinon le meilleur score)
+  let bestScore = -Infinity
+  let bestRank = Infinity
+  let winner = ""
+  let winningMention = ""
+
+  Object.entries(distribution).forEach(([name, choice]) => {
+    if (choice.rank !== undefined) {
+      if (choice.rank < bestRank) {
+        bestRank = choice.rank
+        winner = name
+        winningMention = choice.mention
+        bestScore = parseFloat(choice.score) // Synchro pour compatibilité
+      }
+    } else {
+      // Fallback pour les anciennes URLs sans rank
+      const scoreNum = parseFloat(choice.score)
+      if (scoreNum > bestScore) {
+        bestScore = scoreNum
+        winner = name
+        winningMention = choice.mention
+      }
+    }
+  })
+
+  // Calculer le nombre de votants à partir du premier choix (exclure les abstentions)
+  const firstChoice = Object.values(distribution)[0]
+  const totalVotes = firstChoice
+    ? Object.entries(firstChoice.distribution)
+        .filter(([mention]) => mention !== "Abstention")
+        .reduce((a: number, [, b]: [string, number]) => a + b, 0)
+    : 0
+
+  return {
+    distribution,
+    winner,
+    winningMention,
+    details: {
+      "Méthode de calcul": "Jugement usuel",
+      "Nombre de votants": totalVotes.toString(),
+    },
+  }
+}
