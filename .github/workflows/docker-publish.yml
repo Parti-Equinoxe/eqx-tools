@@ -37,7 +37,7 @@ jobs:
           images: ${{ vars.DOCKERHUB_USERNAME }}/eqx-tools
           tags: |
             type=raw,value=latest,enable={{is_default_branch}}
-            type=sha,format=short
+            type=sha,prefix=,format=short
 
       # Étape 5 : Construire et pousser l'image Docker
       - name: Build and push Docker image
