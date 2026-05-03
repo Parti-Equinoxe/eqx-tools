@@ -48,5 +48,7 @@ jobs:
           platforms: linux/amd64,linux/arm64
           tags: ${{ steps.tags.outputs.tags }}
           labels: ${{ steps.tags.outputs.labels }}
+          build-args: |
+            GIT_HASH=${{ github.sha }}
           cache-from: type=registry,ref=${{ vars.DOCKERHUB_USERNAME }}/eqx-tools:buildcache
           cache-to: type=registry,ref=${{ vars.DOCKERHUB_USERNAME }}/eqx-tools:buildcache,mode=max

@@ -1,6 +1,6 @@
 import { execSync } from "node:child_process"
 
-const gitHash = (() => {
+const gitHash = process.env.GIT_HASH || (() => {
   try {
     return execSync("git rev-parse --short HEAD", {
       encoding: "utf8",
