@@ -1,0 +1,14 @@
+services:
+  # Node.js service (use with: docker compose up eqx-tools --build)
+  eqx-tools:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: eqx-tools-image
+    container_name: eqx-tools-container
+    environment:
+      NODE_ENV: production
+      PORT: "3000"
+    ports:
+      - "127.0.0.1:3001:3000"
+    restart: unless-stopped
