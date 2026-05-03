@@ -1,9 +1,13 @@
 # Fichier à placer sur le VPS dans /etc/docker/compose/eqx-tools
-# Pour rollback : eqx-tools:<version> puis
-# docker-compose pull && docker-compose up -d && docker ps
 services:
   eqx-tools:
     image: partiequinoxe/eqx-tools:latest
     ports:
       - "127.0.0.1:3002:3000"
     restart: unless-stopped
+
+# Pour rollback : eqx-tools:<version> puis
+# docker-compose pull && docker-compose up -d && docker ps && docker image ls
+
+# Supprimer les images non taggées : docker image prune
+# Supprimer une image : docker rmi <ID>
