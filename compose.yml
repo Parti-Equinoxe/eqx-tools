@@ -1,3 +1,6 @@
+# Fichier à placer sur le VPS dans /etc/docker/compose
+# Pour rollback : eqx-tools:<version> puis
+# docker compose pull && docker compose up -d && docker image ls && docker ps
 services:
   eqx-tools:
     image: partiequinoxe/eqx-tools:latest
