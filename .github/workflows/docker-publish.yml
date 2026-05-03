@@ -8,6 +8,7 @@ on:
 jobs:
   build-and-push:
     runs-on: ubuntu-latest
+    environment: CI/CD
 
     steps:
       # Étape 1 : Checkout du code source
