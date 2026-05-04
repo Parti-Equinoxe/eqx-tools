@@ -76,6 +76,12 @@ function HomeContent() {
   const [isVersion6, setIsVersion6] = useState(false)
   const router = useRouter()
 
+  // Reset state on component mount to prevent infinite loading
+  useEffect(() => {
+    setFile(null)
+    setIsLoading(false)
+  }, [])
+
   const handleSubmit = useCallback(
     async (e: React.FormEvent) => {
       e.preventDefault()
